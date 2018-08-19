@@ -1,1 +1,10 @@
-df -h
+- hosts: 13.59.221.108
+  user: Administrator
+  tasks:
+   - name: install tomcat
+     win_package:
+       path: C:\http://www-eu.apache.org/dist/tomcat/tomcat-7/v7.0.90/bin/apache-tomcat-7.0.90.zip
+   - name: unzip tomcat
+     win_unzip:
+       src: C:\http://www-eu.apache.org/dist/tomcat/tomcat-7/v7.0.90/bin/apache-tomcat-7.0.90.zip
+     
