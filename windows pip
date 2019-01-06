@@ -4,6 +4,56 @@ node{
        }
    stage('compile') {
             def mvnHome = tool 'maven'
+            bat(/"${mvnHome}\bin\mvn" compile/)
+            }
+
+stage('Code Analysis') {
+        def mvnHome =  tool 'maven'
+        withSonarQubeEnv('sonar') { 
+          bat "${mvnHome}/bin/mvn sonar:sonar"
+        }
+    }
+stage("Quality Gate Statuc Check"){
+          timeout(time: 30, unit: 'SECONDS') {
+              def qg = waitForQualityGate()
+              if (qg.status != 'OK') {
+			  emailext attachLog: true, body: '''Hi,
+              SonarQube Quality Gates Status Faild.''', recipientProviders: [developers()], subject: 'SonarQube-Status ', to: 'nagarjunadevops8@gmail.com'
+			  error "Pipeline aborted due to quality gate failure: ${qg.status}"
+			  }
+      }
+    }   
+stage('Build') {
+            def mvnHome = tool 'maven'
+            bat(/"${mvnHome}\bin\mvn" clean package/)
+            }
+stage('JUnit testing') {
+            junit '**/target/surefire-reports/*.xml'
+            }
+
+stage('Deploy'){
+      
+     sshagent(['tom-dev']) {
+         sh 'scp -o StrictHostKeyChecking=no /var/lib/jenkins/workspace/maven/target/*.war ubuntu@172.31.35.198:/opt/tomcat/webapps/'
+      }
+   }
+}
+
+
+
+
+
+
+
+
+
+***************************************************************************************************8
+node{
+   stage('checkout') {
+        checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '2612dbdf-e291-4337-9d89-ade9d110bdb5', url: 'https://github.com/nagarjuna8686/maven.git']]])
+       }
+   stage('compile') {
+            def mvnHome = tool 'maven'
             bat(/"${mvnHome}\bin\mvn" clean compile/)
             }
 
